@@ -56,3 +56,124 @@ Train the network using the train_network function, which leverages the backprop
 
 ### License
 This project is licensed under the MIT License. Feel free to use and modify it as needed.
+
+
+
+# Neural Network Implementation with NumPy and PyTorch
+
+This project demonstrates how to implement a neural network for the MNIST dataset using both NumPy and PyTorch. It includes forward propagation, backward propagation, and gradient updates for training the network.
+
+---
+
+## PyTorch Implementation
+
+The PyTorch implementation of the neural network is provided in the `impl_tensor.py` file. This implementation uses PyTorch's `torch.nn` module to define the network layers and `torch.optim` for optimization.
+
+### Key Features:
+- **Data Loading**: Uses `torchvision.datasets` to download and preprocess the MNIST dataset.
+- **Model Definition**: Defines a simple feedforward neural network with one hidden layer.
+- **Training and Evaluation**: Includes training and evaluation loops for the model.
+
+### Code Overview
+
+#### 1. **Data Loading**
+The MNIST dataset is loaded and preprocessed using PyTorch's `torchvision` library. The dataset is normalized to have a mean of `0.1307` and a standard deviation of `0.3081` (standard values for MNIST).
+
+```python
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
+# Define a transform to normalize the data
+transform = transforms.Compose([
+    transforms.ToTensor(),  # Converts image to tensor and scales to [0, 1]
+    transforms.Normalize((0.1307,), (0.3081,))  # Standardize with MNIST's mean and std
+])
+
+# Download and load the training, testing data
+train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+
+# Load data
+train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=1000, shuffle=False)
+```
+#### 2. **Model Definition**
+
+The neural network is defined using PyTorch's torch.nn.Module. It includes:
+
+An input-to-hidden layer (inp_to_hidden).
+A ReLU activation function.
+A hidden-to-output layer (hidden_to_pred).
+
+```python
+import torch.nn as nn
+
+class PyTorchNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.inp_to_hidden = nn.Linear(784, 128)  # Input layer to hidden layer
+        self.relu = nn.ReLU()  # Activation function
+        self.hidden_to_pred = nn.Linear(128, 10)  # Hidden layer to output layer
+
+    def forward(self, x):
+        x = x.view(x.size(0), -1)  # Flatten the input tensor
+        x = self.inp_to_hidden(x)
+        x = self.relu(x)
+        x = self.hidden_to_pred(x)
+        return x
+```
+
+#### 3. **Training and Evaluation**
+
+```python
+import torch.optim as optim
+
+# Initialize the model, loss function, and optimizer
+model = PyTorchNet()
+criterion = nn.CrossEntropyLoss()  # Cross-entropy loss for classification
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+
+# Training loop
+def train(model, train_loader, criterion, optimizer, epochs=5):
+    model.train()
+    for epoch in range(epochs):
+        running_loss = 0.0
+        for batch_idx, (data, target) in enumerate(train_loader):
+            optimizer.zero_grad()  # Zero the gradients
+            output = model(data)  # Forward pass
+            loss = criterion(output, target)  # Compute loss
+            loss.backward()  # Backward pass
+            optimizer.step()  # Update weights
+            running_loss += loss.item()
+        print(f"Epoch {epoch + 1}, Loss: {running_loss / len(train_loader)}")
+
+# Evaluation loop
+def evaluate(model, test_loader):
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            output = model(data)
+            _, predicted = torch.max(output, 1)  # Get the index of the max log-probability
+            correct += (predicted == target).sum().item()
+            total += target.size(0)
+    print(f"Test Accuracy: {100 * correct / total:.2f}%")
+
+# Train and evaluate the model
+train(model, train_loader, criterion, optimizer, epochs=5)
+evaluate(model, test_loader)
+```
+
+### How to Run the PyTorch Implementation
+1. Install Dependencies: Ensure you have PyTorch and torchvision installed. You can install them using pip:
+ - pip install torch torchvision
+
+2. Run the Script: Execute the impl_tensor.py file to train and evaluate the model:
+
+- python impl_tensor.py
+
+3. Expected Output:
+
+The script will print the training loss for each epoch.
+After training, it will evaluate the model on the test dataset and print the test accuracy.
