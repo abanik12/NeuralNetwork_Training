@@ -1,4 +1,5 @@
 import numpy as np
+import mnist_loader
 """
 if we want to create a Network object with 2 neurons in the first layer, 3 neurons in the second layer, and 1 neuron in the final layer:
     net = Network([2, 3, 1])
